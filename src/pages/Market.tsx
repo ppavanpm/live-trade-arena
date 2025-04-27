@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowUpRight, ArrowDownRight, Info, ChevronLeft } from 'lucide-react';
@@ -131,18 +130,19 @@ const Market = () => {
             days = 1;
         }
         
-        let chartData;
-        
+        // We still fetch chart data to keep the API calls in place
+        // but we won't use it since TradingViewChart now uses demo data
         if (type === 'crypto') {
           const response = await getCryptoChart(id!, days);
-          chartData = response.prices.map((price: [number, number]) => ({
+          const data = response.prices.map((price: [number, number]) => ({
             time: price[0] / 1000,
             value: price[1]
           }));
+          setChartData(data);
         } else if (type === 'stock') {
           const response = await getStockHistory(id!);
           const timeSeriesData = response['Time Series (Daily)'];
-          chartData = Object.entries(timeSeriesData)
+          const data = Object.entries(timeSeriesData)
             .slice(0, days === 'max' ? undefined : days)
             .map(([date, values]: [string, any]) => ({
               time: new Date(date).getTime() / 1000,
@@ -152,9 +152,8 @@ const Market = () => {
               close: parseFloat(values['4. close']),
             }))
             .reverse();
+          setChartData(data);
         }
-        
-        setChartData(chartData || []);
       } catch (error) {
         console.error('Error fetching chart data:', error);
       } finally {
@@ -303,7 +302,6 @@ const Market = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <TradingViewChart 
-                data={chartData} 
                 type={type as 'crypto' | 'stock' | 'forex'} 
                 symbol={asset?.symbol || ''} 
                 name={asset?.name || ''} 
