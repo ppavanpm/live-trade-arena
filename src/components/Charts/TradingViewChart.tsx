@@ -1,12 +1,11 @@
 
 import React, { useEffect, useRef } from 'react';
-import { createChart } from 'lightweight-charts';
+import { createChart, IChartApi, ISeriesApi } from 'lightweight-charts';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TradingViewChartProps {
-  data: any[];
   type: 'crypto' | 'stock' | 'forex';
   symbol: string;
   name: string;
@@ -15,7 +14,6 @@ interface TradingViewChartProps {
 }
 
 const TradingViewChart: React.FC<TradingViewChartProps> = ({ 
-  data, 
   type, 
   symbol, 
   name,
@@ -23,15 +21,42 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   onTimeframeChange
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<any>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = React.useState('1D');
+
+  // Demo data
+  const demoData = React.useMemo(() => {
+    const basePrice = 100;
+    const numberOfPoints = 100;
+    const data = [];
+    
+    for (let i = 0; i < numberOfPoints; i++) {
+      const time = new Date();
+      time.setDate(time.getDate() - (numberOfPoints - i));
+      
+      const open = basePrice + Math.random() * 20 - 10;
+      const high = open + Math.random() * 5;
+      const low = open - Math.random() * 5;
+      const close = low + Math.random() * (high - low);
+      
+      data.push({
+        time: time.getTime() / 1000,
+        open,
+        high,
+        low,
+        close,
+      });
+    }
+    
+    return data;
+  }, []);
 
   // Available timeframes
   const timeframes = ['1H', '1D', '1W', '1M', 'ALL'];
 
   useEffect(() => {
-    if (isLoading || !data.length || !chartContainerRef.current) return;
+    if (isLoading || !chartContainerRef.current) return;
     
     if (chartRef.current) {
       chartRef.current.remove();
@@ -42,10 +67,10 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       layout: {
         background: { color: '#0F172A' },
         textColor: '#94A3B8',
-        grid: {
-          vertLines: { color: '#1E293B' },
-          horzLines: { color: '#1E293B' },
-        },
+      },
+      grid: {
+        vertLines: { color: '#1E293B' },
+        horzLines: { color: '#1E293B' },
       },
       width: chartContainerRef.current.clientWidth,
       height: 400,
@@ -67,38 +92,21 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           labelBackgroundColor: '#3B82F6',
         },
       },
-      grid: {
-        vertLines: { color: '#1E293B' },
-        horzLines: { color: '#1E293B' },
-      },
     };
     
     const chart = createChart(chartContainerRef.current, chartOptions);
     chartRef.current = chart;
     
-    // Determine if we should use candlestick or area series based on data format
-    if (data[0] && data[0].open !== undefined) {
-      // Candlestick data format
-      const candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#22C55E',
-        downColor: '#EF4444',
-        borderVisible: false,
-        wickUpColor: '#22C55E',
-        wickDownColor: '#EF4444',
-      });
-      candlestickSeries.setData(data);
-    } else {
-      // Area series for line chart
-      const areaSeries = chart.addAreaSeries({
-        lineColor: '#3B82F6',
-        topColor: 'rgba(59, 130, 246, 0.4)',
-        bottomColor: 'rgba(59, 130, 246, 0.0)',
-        lineWidth: 2,
-      });
-      areaSeries.setData(data);
-    }
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#22C55E',
+      downColor: '#EF4444',
+      borderVisible: false,
+      wickUpColor: '#22C55E',
+      wickDownColor: '#EF4444',
+    });
     
-    // Handle resize
+    candlestickSeries.setData(demoData);
+    
     resizeObserverRef.current = new ResizeObserver(entries => {
       if (entries[0] && chartRef.current) {
         const newWidth = entries[0].contentRect.width;
@@ -107,7 +115,6 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     });
     
     resizeObserverRef.current.observe(chartContainerRef.current);
-
     chart.timeScale().fitContent();
     
     return () => {
@@ -119,7 +126,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         chartRef.current = null;
       }
     };
-  }, [data, isLoading]);
+  }, [demoData, isLoading]);
 
   const handleTimeframeChange = (timeframe: string) => {
     setSelectedTimeframe(timeframe);
