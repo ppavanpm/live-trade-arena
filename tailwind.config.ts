@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Trading app specific colors
+				trading: {
+					'bg-primary': '#0F172A',
+					'bg-secondary': '#1E293B',
+					'bg-tertiary': '#334155',
+					'text-primary': '#F8FAFC',
+					'text-secondary': '#94A3B8',
+					'accent-blue': '#3B82F6',
+					'accent-green': '#22C55E',
+					'accent-red': '#EF4444',
+					'chart-line': '#3B82F6',
+					'chart-grid': '#1E293B',
+					'chart-bg': '#0F172A',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -70,25 +85,39 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'fade-out': {
+					'0%': { opacity: '1', transform: 'translateY(0)' },
+					'100%': { opacity: '0', transform: 'translateY(10px)' }
+				},
+				'price-pulse-positive': {
+					'0%': { backgroundColor: 'rgba(34, 197, 94, 0)' },
+					'50%': { backgroundColor: 'rgba(34, 197, 94, 0.2)' },
+					'100%': { backgroundColor: 'rgba(34, 197, 94, 0)' }
+				},
+				'price-pulse-negative': {
+					'0%': { backgroundColor: 'rgba(239, 68, 68, 0)' },
+					'50%': { backgroundColor: 'rgba(239, 68, 68, 0.2)' },
+					'100%': { backgroundColor: 'rgba(239, 68, 68, 0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'fade-out': 'fade-out 0.3s ease-out',
+				'price-pulse-positive': 'price-pulse-positive 1s ease-out',
+				'price-pulse-negative': 'price-pulse-negative 1s ease-out',
 			}
 		}
 	},

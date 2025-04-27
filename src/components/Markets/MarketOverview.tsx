@@ -1,0 +1,281 @@
+
+import React, { useEffect, useState } from 'react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { 
+  getCryptoMarkets,
+  getPopularStocks,
+  getForexRates,
+  CryptoAsset,
+  StockAsset,
+  ForexAsset
+} from '@/services/api';
+
+const MarketOverview: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('crypto');
+  const [cryptoAssets, setCryptoAssets] = useState<CryptoAsset[]>([]);
+  const [stockAssets, setStockAssets] = useState<StockAsset[]>([]);
+  const [forexAssets, setForexAssets] = useState<ForexAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      setLoading(true);
+      try {
+        if (activeTab === 'crypto') {
+          const data = await getCryptoMarkets();
+          setCryptoAssets(data.slice(0, 5));
+        } else if (activeTab === 'stocks') {
+          const data = await getPopularStocks();
+          setStockAssets(data);
+        } else if (activeTab === 'forex') {
+          const data = await getForexRates();
+          setForexAssets(data);
+        }
+      } catch (error) {
+        console.error('Error fetching market data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketData();
+  }, [activeTab]);
+
+  const formatPrice = (price: number) => {
+    if (price < 0.01) {
+      return price.toFixed(6);
+    } else if (price < 1) {
+      return price.toFixed(4);
+    } else if (price >= 1000) {
+      return price.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    } else {
+      return price.toFixed(2);
+    }
+  };
+  
+  const formatPercentage = (percentage: number) => {
+    return percentage.toFixed(2) + '%';
+  };
+
+  return (
+    <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary">
+      <CardContent className="p-0">
+        <div className="p-6 border-b border-trading-bg-tertiary/30">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-medium text-trading-text-primary">Market Overview</h2>
+            <Button variant="ghost" asChild>
+              <Link to="/markets" className="text-trading-accent-blue hover:text-trading-accent-blue/80 flex items-center gap-1">
+                View All <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          <p className="text-sm text-trading-text-secondary mt-1">Real-time market data across assets</p>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 bg-trading-bg-tertiary/30 rounded-none border-b border-trading-bg-tertiary/30">
+            <TabsTrigger 
+              value="crypto" 
+              className={cn(
+                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
+                "data-[state=active]:border-trading-accent-blue rounded-none"
+              )}
+            >
+              Crypto
+            </TabsTrigger>
+            <TabsTrigger 
+              value="stocks" 
+              className={cn(
+                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
+                "data-[state=active]:border-trading-accent-blue rounded-none"
+              )}
+            >
+              Stocks
+            </TabsTrigger>
+            <TabsTrigger 
+              value="forex" 
+              className={cn(
+                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
+                "data-[state=active]:border-trading-accent-blue rounded-none"
+              )}
+            >
+              Forex
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="crypto" className="px-0 py-0 m-0">
+            <div className="divide-y divide-trading-bg-tertiary/30">
+              {loading ? (
+                Array(5).fill(0).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-4 w-24 ml-auto" />
+                      <Skeleton className="h-3 w-16 ml-auto" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                cryptoAssets.map((asset) => (
+                  <Link 
+                    to={`/market/crypto/${asset.id}`} 
+                    key={asset.id} 
+                    className="flex items-center justify-between p-4 hover:bg-trading-bg-tertiary/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img src={asset.image} alt={asset.name} className="h-8 w-8 rounded-full" />
+                      <div>
+                        <p className="font-medium text-trading-text-primary">{asset.name}</p>
+                        <p className="text-sm text-trading-text-secondary">{asset.symbol.toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-trading-text-primary">
+                        ${formatPrice(asset.current_price)}
+                      </p>
+                      <div className="flex items-center justify-end">
+                        {asset.price_change_percentage_24h >= 0 ? (
+                          <div className="flex items-center text-trading-accent-green">
+                            <ArrowUpRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(asset.price_change_percentage_24h)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-trading-accent-red">
+                            <ArrowDownRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(Math.abs(asset.price_change_percentage_24h))}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="stocks" className="px-0 py-0 m-0">
+            <div className="divide-y divide-trading-bg-tertiary/30">
+              {loading ? (
+                Array(5).fill(0).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between p-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-4 w-24 ml-auto" />
+                      <Skeleton className="h-3 w-16 ml-auto" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                stockAssets.map((stock) => (
+                  <Link 
+                    to={`/market/stock/${stock.symbol}`} 
+                    key={stock.symbol} 
+                    className="flex items-center justify-between p-4 hover:bg-trading-bg-tertiary/10"
+                  >
+                    <div>
+                      <p className="font-medium text-trading-text-primary">{stock.symbol}</p>
+                      <p className="text-sm text-trading-text-secondary">{stock.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-trading-text-primary">
+                        ${formatPrice(stock.price)}
+                      </p>
+                      <div className="flex items-center justify-end">
+                        {stock.changePercent >= 0 ? (
+                          <div className="flex items-center text-trading-accent-green">
+                            <ArrowUpRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(stock.changePercent)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-trading-accent-red">
+                            <ArrowDownRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(Math.abs(stock.changePercent))}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="forex" className="px-0 py-0 m-0">
+            <div className="divide-y divide-trading-bg-tertiary/30">
+              {loading ? (
+                Array(5).fill(0).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between p-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-4 w-24 ml-auto" />
+                      <Skeleton className="h-3 w-16 ml-auto" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                forexAssets.map((forex) => (
+                  <Link 
+                    to={`/market/forex/${forex.fromCurrency}${forex.toCurrency}`} 
+                    key={`${forex.fromCurrency}${forex.toCurrency}`} 
+                    className="flex items-center justify-between p-4 hover:bg-trading-bg-tertiary/10"
+                  >
+                    <div>
+                      <p className="font-medium text-trading-text-primary">{forex.fromCurrency}/{forex.toCurrency}</p>
+                      <p className="text-sm text-trading-text-secondary">Forex</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-trading-text-primary">
+                        {formatPrice(forex.exchangeRate)}
+                      </p>
+                      <div className="flex items-center justify-end">
+                        {forex.changePercent >= 0 ? (
+                          <div className="flex items-center text-trading-accent-green">
+                            <ArrowUpRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(forex.changePercent)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-trading-accent-red">
+                            <ArrowDownRight className="h-3 w-3 mr-1" />
+                            <span className="text-sm">{formatPercentage(Math.abs(forex.changePercent))}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default MarketOverview;
