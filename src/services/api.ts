@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -411,9 +410,9 @@ export const getUserTransactions = async (): Promise<Transaction[]> => {
       assetSymbol: trade.symbol,
       assetName: trade.symbol, // We don't have name in the trades table
       type: trade.type as 'buy' | 'sell',
-      quantity: parseFloat(trade.quantity),
-      price: parseFloat(trade.price),
-      total: parseFloat(trade.total),
+      quantity: parseFloat(trade.quantity.toString()), // Convert to string first
+      price: parseFloat(trade.price.toString()), // Convert to string first
+      total: parseFloat(trade.total.toString()), // Convert to string first
       timestamp: trade.created_at
     }));
   } catch (error) {
@@ -450,9 +449,9 @@ export const executeTrade = async (
         symbol: assetSymbol,
         type: tradeType,
         order_type: 'market',
-        quantity,
-        price,
-        total
+        quantity: quantity.toString(), // Convert to string
+        price: price.toString(), // Convert to string 
+        total: total.toString() // Convert to string
       })
       .select()
       .single();
@@ -473,9 +472,9 @@ export const executeTrade = async (
       assetSymbol,
       assetName,
       type: tradeType,
-      quantity: parseFloat(trade.quantity),
-      price: parseFloat(trade.price),
-      total: parseFloat(trade.total),
+      quantity: parseFloat(trade.quantity.toString()),
+      price: parseFloat(trade.price.toString()),
+      total: parseFloat(trade.total.toString()),
       timestamp: trade.created_at
     };
   } catch (error) {

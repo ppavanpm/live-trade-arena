@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -24,25 +23,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import useMobile from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { logoutUser } from '@/services/api';
 import { toast } from 'sonner';
 
 interface NavbarProps {
   isLoggedIn?: boolean;
+  onLogin?: () => void;
+  onSignup?: () => void;
+  onLogout?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn = false }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn = false, onLogin, onSignup, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<any>(null);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get user data when component mounts
   useEffect(() => {
     const fetchUserData = async () => {
       const { data } = await supabase.auth.getUser();
@@ -76,7 +77,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn = false }) => {
   
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Implement search functionality here
     toast.info(`Searching for: ${searchQuery}`);
     setSearchQuery('');
   };
@@ -84,6 +84,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn = false }) => {
   const handleLogout = async () => {
     try {
       await logoutUser();
+      if (onLogout) onLogout();
       navigate('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
