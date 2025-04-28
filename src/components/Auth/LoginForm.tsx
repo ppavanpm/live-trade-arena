@@ -1,124 +1,97 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { loginUser } from '@/services/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 
-const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) throw error;
-
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      await loginUser(data.email, data.password);
+      // No need to call navigate here as auth listener will handle it
     } catch (error: any) {
-      toast.error(error.message || 'Invalid email or password');
       console.error('Login error:', error);
+      // Toast error messages will be handled by the api function
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md border-trading-bg-tertiary/30 bg-trading-bg-secondary">
-      <CardHeader>
-        <CardTitle className="text-2xl text-trading-text-primary">Login</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-trading-text-primary">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={isLoading}
-                      placeholder="john@example.com"
-                      type="email"
-                      {...field}
-                      className="bg-trading-bg-tertiary/30 border-trading-bg-tertiary text-trading-text-primary focus:border-trading-accent-blue"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-trading-text-primary">Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      disabled={isLoading}
-                      placeholder="******"
-                      type="password"
-                      {...field}
-                      className="bg-trading-bg-tertiary/30 border-trading-bg-tertiary text-trading-text-primary focus:border-trading-accent-blue"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-trading-accent-blue hover:bg-trading-accent-blue/90"
-            >
-              {isLoading ? "Signing In..." : "Sign In"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-2 border-t border-trading-bg-tertiary/30 pt-4">
-        <div className="text-sm text-trading-text-secondary text-center">
-          <a href="#" className="text-trading-accent-blue hover:underline">Forgot password?</a>
+    <div className="p-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="youremail@example.com"
+            className="bg-trading-bg-tertiary/30 border-trading-bg-tertiary"
+            autoComplete="email"
+            disabled={isLoading}
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="text-sm text-trading-accent-red">{errors.email.message}</p>
+          )}
         </div>
-      </CardFooter>
-    </Card>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <a href="#" className="text-sm text-trading-accent-blue hover:underline">
+              Forgot password?
+            </a>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            className="bg-trading-bg-tertiary/30 border-trading-bg-tertiary"
+            autoComplete="current-password"
+            disabled={isLoading}
+            {...register('password')}
+          />
+          {errors.password && (
+            <p className="text-sm text-trading-accent-red">{errors.password.message}</p>
+          )}
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Logging in...
+            </>
+          ) : (
+            'Login'
+          )}
+        </Button>
+      </form>
+    </div>
   );
 };
 

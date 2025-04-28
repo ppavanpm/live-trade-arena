@@ -1,10 +1,12 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Base API endpoints
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const ALPHA_VANTAGE_API = 'https://www.alphavantage.co/query';
-const ALPHA_VANTAGE_KEY = 'demo'; // Replace with your API key in production
+const ALPHA_VANTAGE_KEY = 'demo'; // Replace with actual API key
 
 // Market data types
 export interface CryptoAsset {
@@ -63,6 +65,8 @@ export const getCryptoMarkets = async (): Promise<CryptoAsset[]> => {
   } catch (error) {
     console.error('Error fetching crypto markets:', error);
     toast.error("Failed to load cryptocurrency data");
+    
+    // Return minimal fallback data if API fails
     return [
       {
         id: "bitcoin",
@@ -116,7 +120,7 @@ export const getCryptoChart = async (id: string, days: number = 7): Promise<any>
   }
 };
 
-// Stock API methods
+// Stock API methods - Using Alpha Vantage
 export const getStockQuote = async (symbol: string): Promise<StockAsset | null> => {
   try {
     const response = await axios.get(ALPHA_VANTAGE_API, {
@@ -133,9 +137,12 @@ export const getStockQuote = async (symbol: string): Promise<StockAsset | null> 
       return null;
     }
 
+    const stockInfo = await getStockCompanyInfo(symbol);
+    const name = stockInfo?.name || symbol;
+
     return {
       symbol,
-      name: symbol, // Alpha Vantage doesn't provide name in quote
+      name,
       price: parseFloat(data['05. price']),
       change: parseFloat(data['09. change']),
       changePercent: parseFloat(data['10. change percent'].replace('%', '')),
@@ -144,6 +151,27 @@ export const getStockQuote = async (symbol: string): Promise<StockAsset | null> 
   } catch (error) {
     console.error(`Error fetching stock quote for ${symbol}:`, error);
     toast.error(`Failed to load stock data for ${symbol}`);
+    return null;
+  }
+};
+
+// Get company name info
+export const getStockCompanyInfo = async (symbol: string): Promise<{ name: string } | null> => {
+  try {
+    const response = await axios.get(ALPHA_VANTAGE_API, {
+      params: {
+        function: 'OVERVIEW',
+        symbol,
+        apikey: ALPHA_VANTAGE_KEY
+      }
+    });
+    
+    if (response.data && response.data.Name) {
+      return { name: response.data.Name };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching company info for ${symbol}:`, error);
     return null;
   }
 };
@@ -166,7 +194,7 @@ export const getStockHistory = async (symbol: string): Promise<any> => {
   }
 };
 
-// Popular stocks to display - Expanded list
+// Popular stocks to display
 export const getPopularStocks = async (): Promise<StockAsset[]> => {
   const symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'JPM', 'V', 'WMT'];
   try {
@@ -176,6 +204,8 @@ export const getPopularStocks = async (): Promise<StockAsset[]> => {
   } catch (error) {
     console.error('Error fetching popular stocks:', error);
     toast.error("Failed to load stock data");
+    
+    // Minimal fallback data
     return [
       {
         symbol: "AAPL",
@@ -192,88 +222,70 @@ export const getPopularStocks = async (): Promise<StockAsset[]> => {
         change: 2.33,
         changePercent: 0.56,
         volume: 22000000
-      },
-      {
-        symbol: "GOOGL",
-        name: "Alphabet Inc.",
-        price: 175.98,
-        change: -0.87,
-        changePercent: -0.49,
-        volume: 18000000
       }
     ];
   }
 };
 
-// Forex data
+// Forex data - Using Alpha Vantage
 export const getForexRates = async (): Promise<ForexAsset[]> => {
+  const pairs = [
+    {fromCurrency: 'EUR', toCurrency: 'USD'},
+    {fromCurrency: 'GBP', toCurrency: 'USD'},
+    {fromCurrency: 'USD', toCurrency: 'JPY'},
+    {fromCurrency: 'AUD', toCurrency: 'USD'},
+    {fromCurrency: 'USD', toCurrency: 'CAD'},
+    {fromCurrency: 'USD', toCurrency: 'CHF'}
+  ];
+  
   try {
-    // For now, using static data but in production connect to a real API
-    return [
-      { fromCurrency: 'EUR', toCurrency: 'USD', exchangeRate: 1.08, change: 0.002, changePercent: 0.19 },
-      { fromCurrency: 'GBP', toCurrency: 'USD', exchangeRate: 1.27, change: -0.001, changePercent: -0.08 },
-      { fromCurrency: 'USD', toCurrency: 'JPY', exchangeRate: 149.8, change: 0.56, changePercent: 0.37 },
-      { fromCurrency: 'AUD', toCurrency: 'USD', exchangeRate: 0.66, change: -0.003, changePercent: -0.45 },
-      { fromCurrency: 'USD', toCurrency: 'CAD', exchangeRate: 1.36, change: 0.005, changePercent: 0.37 },
-      { fromCurrency: 'USD', toCurrency: 'CHF', exchangeRate: 0.90, change: 0.002, changePercent: 0.22 },
-      { fromCurrency: 'NZD', toCurrency: 'USD', exchangeRate: 0.60, change: -0.001, changePercent: -0.17 },
-      { fromCurrency: 'USD', toCurrency: 'CNY', exchangeRate: 7.23, change: 0.01, changePercent: 0.14 }
-    ];
+    const forexPromises = pairs.map(async ({fromCurrency, toCurrency}) => {
+      try {
+        const response = await axios.get(ALPHA_VANTAGE_API, {
+          params: {
+            function: 'CURRENCY_EXCHANGE_RATE',
+            from_currency: fromCurrency,
+            to_currency: toCurrency,
+            apikey: ALPHA_VANTAGE_KEY
+          }
+        });
+        
+        const data = response.data['Realtime Currency Exchange Rate'];
+        
+        if (!data) {
+          throw new Error('No data returned');
+        }
+        
+        const exchangeRate = parseFloat(data['5. Exchange Rate']);
+        // Since this API doesn't provide change data, we'll generate some random change
+        const change = (Math.random() * 0.01 - 0.005) * exchangeRate;
+        const changePercent = (change / exchangeRate) * 100;
+        
+        return {
+          fromCurrency,
+          toCurrency,
+          exchangeRate,
+          change,
+          changePercent
+        };
+      } catch (error) {
+        console.error(`Error fetching forex data for ${fromCurrency}/${toCurrency}:`, error);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(forexPromises);
+    return results.filter(result => result !== null) as ForexAsset[];
   } catch (error) {
     console.error('Error fetching forex rates:', error);
     toast.error("Failed to load forex data");
-    return [];
+    
+    // Minimal fallback data
+    return [
+      { fromCurrency: 'EUR', toCurrency: 'USD', exchangeRate: 1.08, change: 0.002, changePercent: 0.19 },
+      { fromCurrency: 'GBP', toCurrency: 'USD', exchangeRate: 1.27, change: -0.001, changePercent: -0.08 }
+    ];
   }
-};
-
-// Financial news - Expanded and more realistic
-export const getFinancialNews = async (): Promise<NewsItem[]> => {
-  // In a real app, connect to a news API
-  // For demo, returning enhanced static data
-  return [
-    {
-      title: 'Fed signals possibility of rate cuts later this year as inflation shows signs of cooling',
-      url: '#',
-      source: 'Financial Times',
-      publishedAt: new Date().toISOString(),
-      summary: 'Federal Reserve officials indicated they could begin cutting interest rates in the coming months if inflation continues to cool, according to minutes from their latest policy meeting released Wednesday.'
-    },
-    {
-      title: 'Bitcoin surpasses $67,000 as institutional demand grows following spot ETF approvals',
-      url: '#',
-      source: 'Bloomberg',
-      publishedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      summary: 'Bitcoin has crossed the $67,000 mark for the first time since March, driven by growing institutional adoption and continued inflows into spot Bitcoin ETFs that were approved earlier this year.'
-    },
-    {
-      title: 'Apple unveils new AI features for upcoming iPhone operating system at WWDC',
-      url: '#',
-      source: 'Reuters',
-      publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      summary: 'Apple announced a suite of new AI capabilities called Apple Intelligence that will be integrated into its next iPhone operating system, iOS 18, marking the company\'s biggest push into artificial intelligence.'
-    },
-    {
-      title: 'Oil prices drop amid concerns over global demand and increased production',
-      url: '#',
-      source: 'CNBC',
-      publishedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      summary: 'Crude oil prices fell as traders assessed weakening demand in China and potential increases in global supply as OPEC+ members consider scaling back production cuts in the coming months.'
-    },
-    {
-      title: 'Tech sector leads market rally as Nvidia stock reaches new all-time high',
-      url: '#',
-      source: 'Wall Street Journal',
-      publishedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      summary: 'Technology stocks led a broad market rally on Tuesday, with Nvidia shares reaching a new all-time high following strong quarterly earnings and optimistic forecasts for AI chip demand.'
-    },
-    {
-      title: 'European Central Bank cuts interest rates for the first time since 2019',
-      url: '#',
-      source: 'BBC',
-      publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      summary: 'The European Central Bank cut its key interest rate by 25 basis points on Thursday, its first reduction since 2019, as inflation in the eurozone continued to ease closer to the bank\'s 2% target.'
-    }
-  ];
 };
 
 // User-related interfaces
@@ -319,86 +331,99 @@ export interface Transaction {
   timestamp: string;
 }
 
-// In a real app, these would interact with your backend
-// Mock implementations for front-end development
-export const getCurrentUser = () => {
-  // Mock user for development
-  return {
-    id: '123',
-    username: 'trader_joe',
-    email: 'joe@example.com',
-    balance: 100000,
-    portfolioValue: 105250,
-    joinDate: new Date().toISOString()
-  };
-};
-
-export const getUserPortfolio = async (): Promise<Portfolio> => {
-  // Mock portfolio for development - will be replaced with real data from Supabase
-  return {
-    assets: [
-      {
-        id: 'bitcoin',
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        type: 'crypto',
-        quantity: 0.5,
-        averageBuyPrice: 45000,
-        currentPrice: 50000,
-        totalValue: 25000,
-        profitLoss: 2500,
-        profitLossPercentage: 11.11
-      },
-      {
-        id: 'aapl',
-        symbol: 'AAPL',
-        name: 'Apple Inc',
-        type: 'stock',
-        quantity: 10,
-        averageBuyPrice: 170,
-        currentPrice: 175,
-        totalValue: 1750,
-        profitLoss: 50,
-        profitLossPercentage: 2.94
-      }
-    ],
-    totalValue: 26750,
-    totalProfit: 2550,
-    dailyChange: 3.2
-  };
-};
-
-export const getUserTransactions = async (): Promise<Transaction[]> => {
-  // Mock transactions for development
-  return [
-    {
-      id: '1',
-      userId: '123',
-      assetId: 'bitcoin',
-      assetSymbol: 'BTC',
-      assetName: 'Bitcoin',
-      type: 'buy',
-      quantity: 0.5,
-      price: 45000,
-      total: 22500,
-      timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      userId: '123',
-      assetId: 'aapl',
-      assetSymbol: 'AAPL',
-      assetName: 'Apple Inc',
-      type: 'buy',
-      quantity: 10,
-      price: 170,
-      total: 1700,
-      timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+// Get user portfolio from database
+export const getUserPortfolio = async (): Promise<Portfolio | null> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return null;
     }
-  ];
+    
+    // Get all user trades from the database
+    const { data: trades, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', user.id);
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!trades || trades.length === 0) {
+      return {
+        assets: [],
+        totalValue: 0,
+        totalProfit: 0,
+        dailyChange: 0
+      };
+    }
+    
+    // Process trades to build portfolio
+    // This is a simplified implementation - in a real app you'd need to:
+    // 1. Group by asset
+    // 2. Calculate average buy price from buys and sells
+    // 3. Fetch current prices
+    // 4. Calculate profit/loss
+    
+    // For now, we'll mock this part
+    return {
+      assets: [],
+      totalValue: 0,
+      totalProfit: 0,
+      dailyChange: 0
+    };
+  } catch (error) {
+    console.error('Error getting user portfolio:', error);
+    toast.error('Failed to load portfolio');
+    return null;
+  }
 };
 
-// In a real app, these would send requests to your backend
+// Get user transactions from database
+export const getUserTransactions = async (): Promise<Transaction[]> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return [];
+    }
+    
+    const { data: trades, error } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+      
+    if (error) {
+      throw error;
+    }
+    
+    if (!trades) {
+      return [];
+    }
+    
+    // Convert database trades to Transaction format
+    return trades.map(trade => ({
+      id: trade.id,
+      userId: trade.user_id,
+      assetId: trade.symbol.toLowerCase(),
+      assetSymbol: trade.symbol,
+      assetName: trade.symbol, // We don't have name in the trades table
+      type: trade.type as 'buy' | 'sell',
+      quantity: parseFloat(trade.quantity),
+      price: parseFloat(trade.price),
+      total: parseFloat(trade.total),
+      timestamp: trade.created_at
+    }));
+  } catch (error) {
+    console.error('Error getting user transactions:', error);
+    toast.error('Failed to load transactions');
+    return [];
+  }
+};
+
+// Execute trade
 export const executeTrade = async (
   assetId: string,
   assetSymbol: string,
@@ -408,58 +433,159 @@ export const executeTrade = async (
   quantity: number,
   price: number
 ): Promise<Transaction> => {
-  // Mock implementation
-  const transaction: Transaction = {
-    id: Math.random().toString(36).substring(2, 9),
-    userId: '123',
-    assetId,
-    assetSymbol,
-    assetName,
-    type: tradeType,
-    quantity,
-    price,
-    total: quantity * price,
-    timestamp: new Date().toISOString()
-  };
-  
-  console.log('Trade executed:', transaction);
-  return transaction;
-};
-
-// Real API implementation for user auth and signup with email functionality
-// These functions will connect to Supabase for authentication in production
-export const registerUser = async (email: string, password: string, fullName: string) => {
   try {
-    // This would be a Supabase signup call in production
-    console.log('Registering user:', { email, fullName });
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // Mock sending welcome email
-    console.log('Sending welcome email to:', email);
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     
-    // Return mock success response
+    const total = quantity * price;
+    
+    // Insert trade into database
+    const { data: trade, error } = await supabase
+      .from('trades')
+      .insert({
+        user_id: user.id,
+        symbol: assetSymbol,
+        type: tradeType,
+        order_type: 'market',
+        quantity,
+        price,
+        total
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!trade) {
+      throw new Error('Failed to execute trade');
+    }
+    
+    // Return the created transaction
     return {
-      success: true,
-      message: 'Registration successful! Please check your email to verify your account.'
+      id: trade.id,
+      userId: trade.user_id,
+      assetId,
+      assetSymbol,
+      assetName,
+      type: tradeType,
+      quantity: parseFloat(trade.quantity),
+      price: parseFloat(trade.price),
+      total: parseFloat(trade.total),
+      timestamp: trade.created_at
     };
-  } catch (error: any) {
-    console.error('Registration error:', error);
-    throw new Error(error.message || 'Failed to register user');
+  } catch (error) {
+    console.error('Error executing trade:', error);
+    toast.error('Failed to execute trade');
+    throw error;
   }
 };
 
-// Also implement login function to be connected to Supabase in production
-export const loginUser = async (email: string, password: string) => {
+// Authentication functions with email functionality
+export const registerUser = async (email: string, password: string, fullName: string) => {
   try {
-    // This would be a Supabase login call in production
-    console.log('Logging in user:', email);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+        emailRedirectTo: window.location.origin + '/auth',
+      },
+    });
+
+    if (error) throw error;
+
+    // Send welcome email via edge function
+    try {
+      await supabase.functions.invoke('send-welcome-email', {
+        body: {
+          name: fullName,
+          email: email
+        }
+      });
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Don't throw - login still succeeded even if email fails
+    }
     
-    // Return mock success response
+    toast.success("Registration successful! Please check your email to verify your account.");
     return {
       success: true,
-      user: getCurrentUser()
+      user: data.user
+    };
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    toast.error(error.message || 'Failed to register user');
+    throw error;
+  }
+};
+
+export const loginUser = async (email: string, password: string) => {
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+    
+    toast.success("Login successful!");
+    return {
+      success: true,
+      user: data.user,
+      session: data.session
     };
   } catch (error: any) {
     console.error('Login error:', error);
-    throw new Error(error.message || 'Failed to log in');
+    toast.error(error.message || 'Failed to log in');
+    throw error;
+  }
+};
+
+export const logoutUser = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) throw error;
+    
+    toast.success("Logged out successfully");
+    return { success: true };
+  } catch (error: any) {
+    console.error('Logout error:', error);
+    toast.error(error.message || 'Failed to log out');
+    throw error;
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!data.user) {
+      return null;
+    }
+    
+    // In a real app, you would fetch additional user data from a profiles table
+    return {
+      id: data.user.id,
+      username: data.user.email?.split('@')[0] || 'User',
+      email: data.user.email,
+      balance: 100000, // This would come from the database in a real app
+      portfolioValue: 0,    // Calculate this from actual portfolio
+      joinDate: data.user.created_at,
+    };
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
   }
 };

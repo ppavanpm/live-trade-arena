@@ -23,6 +23,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = React.useState('1D');
 
   // Enhanced demo data for better visualization
@@ -101,9 +102,11 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       },
     };
     
+    // Create chart
     const chart = createChart(chartContainerRef.current, chartOptions);
     chartRef.current = chart;
     
+    // Create and store candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#22C55E',
       downColor: '#EF4444',
@@ -112,16 +115,23 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       wickDownColor: '#EF4444',
     });
     
+    seriesRef.current = candlestickSeries;
+    
+    // Set data to the series
     candlestickSeries.setData(demoData);
     
+    // Handle resize
     resizeObserverRef.current = new ResizeObserver(entries => {
       if (entries[0] && chartRef.current) {
         const newWidth = entries[0].contentRect.width;
         chartRef.current.applyOptions({ width: newWidth });
+        chartRef.current.timeScale().fitContent();
       }
     });
     
     resizeObserverRef.current.observe(chartContainerRef.current);
+    
+    // Fit content
     chart.timeScale().fitContent();
     
     return () => {

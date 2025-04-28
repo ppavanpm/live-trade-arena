@@ -34,6 +34,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    console.log(`Sending welcome email to ${email} for user ${name}`);
+
     const emailResponse = await resend.emails.send({
       from: "Trading Platform <onboarding@resend.dev>",
       to: [email],
@@ -56,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p style="margin-bottom: 15px;">If you have any questions or need assistance, our support team is always ready to help.</p>
           
           <div style="background-color: #3B82F6; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 15px;">
-            <a href="https://yourplatform.com/dashboard" style="color: white; text-decoration: none;">Go to Dashboard</a>
+            <a href="${Deno.env.get("SITE_URL") || "https://yourplatform.com"}/dashboard" style="color: white; text-decoration: none;">Go to Dashboard</a>
           </div>
           
           <p style="margin-top: 30px; font-size: 14px; color: #666;">

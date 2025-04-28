@@ -1,12 +1,60 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from '@/components/Auth/LoginForm';
 import SignupForm from '@/components/Auth/SignupForm';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState('login');
+  const [checking, setChecking] = useState(true);
+  const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      setChecking(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          navigate('/dashboard');
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  if (checking) {
+    return (
+      <div className="trading-app min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-trading-accent-blue" />
+          <p className="text-trading-text-secondary">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="trading-app min-h-screen flex items-center justify-center p-4">
