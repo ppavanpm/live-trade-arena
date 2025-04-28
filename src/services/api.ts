@@ -442,18 +442,19 @@ export const executeTrade = async (
     
     const total = quantity * price;
     
-    // Insert trade into database - wrap the object in an array to match the expected type
+    // Insert trade into database - use a single object, not an array
     const { data: trade, error } = await supabase
       .from('trades')
-      .insert([{
+      .insert({
         user_id: user.id,
         symbol: assetSymbol,
         type: tradeType,
         order_type: 'market',
-        quantity: quantity.toString(), // Convert to string
-        price: price.toString(), // Convert to string 
-        total: total.toString() // Convert to string
-      }])
+        // Convert numeric values to numbers to match the database type
+        quantity: quantity,
+        price: price,
+        total: total
+      })
       .select()
       .single();
     
