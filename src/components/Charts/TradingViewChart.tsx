@@ -25,20 +25,27 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = React.useState('1D');
 
-  // Demo data
+  // Enhanced demo data for better visualization
   const demoData = React.useMemo(() => {
-    const basePrice = 100;
+    const basePrice = type === 'crypto' ? 50000 : type === 'forex' ? 1.2 : 150;
+    const volatility = type === 'crypto' ? 0.03 : type === 'forex' ? 0.005 : 0.01;
+    const trend = Math.random() > 0.5 ? 1 : -1;
     const numberOfPoints = 100;
     const data = [];
+    
+    let currentPrice = basePrice;
     
     for (let i = 0; i < numberOfPoints; i++) {
       const time = new Date();
       time.setDate(time.getDate() - (numberOfPoints - i));
       
-      const open = basePrice + Math.random() * 20 - 10;
-      const high = open + Math.random() * 5;
-      const low = open - Math.random() * 5;
-      const close = low + Math.random() * (high - low);
+      // Add some trend and randomness
+      currentPrice = currentPrice * (1 + (trend * 0.002) + ((Math.random() - 0.5) * volatility));
+      
+      const open = currentPrice;
+      const close = currentPrice * (1 + ((Math.random() - 0.5) * volatility));
+      const high = Math.max(open, close) * (1 + Math.random() * volatility * 0.5);
+      const low = Math.min(open, close) * (1 - Math.random() * volatility * 0.5);
       
       data.push({
         time: time.getTime() / 1000,
@@ -50,7 +57,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     }
     
     return data;
-  }, []);
+  }, [type]);
 
   // Available timeframes
   const timeframes = ['1H', '1D', '1W', '1M', 'ALL'];

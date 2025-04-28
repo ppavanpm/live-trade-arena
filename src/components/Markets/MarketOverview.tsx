@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Search } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -22,6 +23,7 @@ const MarketOverview: React.FC = () => {
   const [stockAssets, setStockAssets] = useState<StockAsset[]>([]);
   const [forexAssets, setForexAssets] = useState<ForexAsset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchMarketData = async () => {
@@ -29,7 +31,7 @@ const MarketOverview: React.FC = () => {
       try {
         if (activeTab === 'crypto') {
           const data = await getCryptoMarkets();
-          setCryptoAssets(data.slice(0, 5));
+          setCryptoAssets(data.slice(0, 10));
         } else if (activeTab === 'stocks') {
           const data = await getPopularStocks();
           setStockAssets(data);
@@ -68,6 +70,26 @@ const MarketOverview: React.FC = () => {
     return percentage.toFixed(2) + '%';
   };
 
+  const filterAssets = (assets: any[], term: string) => {
+    if (!term) return assets;
+    term = term.toLowerCase();
+    return assets.filter(asset => {
+      const symbol = 'symbol' in asset ? asset.symbol.toLowerCase() : '';
+      const name = 'name' in asset ? asset.name.toLowerCase() : '';
+      const fromCurrency = 'fromCurrency' in asset ? asset.fromCurrency.toLowerCase() : '';
+      const toCurrency = 'toCurrency' in asset ? asset.toCurrency.toLowerCase() : '';
+      
+      return symbol.includes(term) || 
+             name.includes(term) || 
+             fromCurrency.includes(term) || 
+             toCurrency.includes(term);
+    });
+  };
+
+  const filteredCryptoAssets = filterAssets(cryptoAssets, searchTerm);
+  const filteredStockAssets = filterAssets(stockAssets, searchTerm);
+  const filteredForexAssets = filterAssets(forexAssets, searchTerm);
+
   return (
     <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary">
       <CardContent className="p-0">
@@ -81,6 +103,18 @@ const MarketOverview: React.FC = () => {
             </Button>
           </div>
           <p className="text-sm text-trading-text-secondary mt-1">Real-time market data across assets</p>
+        </div>
+        
+        <div className="p-4 border-b border-trading-bg-tertiary/30">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-trading-text-secondary h-4 w-4" />
+            <Input 
+              placeholder="Search assets..." 
+              className="pl-9 bg-trading-bg-tertiary/30 border-trading-bg-tertiary focus:border-trading-accent-blue"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -135,8 +169,12 @@ const MarketOverview: React.FC = () => {
                     </div>
                   </div>
                 ))
+              ) : filteredCryptoAssets.length === 0 ? (
+                <div className="p-6 text-center text-trading-text-secondary">
+                  No cryptocurrencies found matching your search.
+                </div>
               ) : (
-                cryptoAssets.map((asset) => (
+                filteredCryptoAssets.map((asset) => (
                   <Link 
                     to={`/market/crypto/${asset.id}`} 
                     key={asset.id} 
@@ -188,8 +226,12 @@ const MarketOverview: React.FC = () => {
                     </div>
                   </div>
                 ))
+              ) : filteredStockAssets.length === 0 ? (
+                <div className="p-6 text-center text-trading-text-secondary">
+                  No stocks found matching your search.
+                </div>
               ) : (
-                stockAssets.map((stock) => (
+                filteredStockAssets.map((stock) => (
                   <Link 
                     to={`/market/stock/${stock.symbol}`} 
                     key={stock.symbol} 
@@ -238,8 +280,12 @@ const MarketOverview: React.FC = () => {
                     </div>
                   </div>
                 ))
+              ) : filteredForexAssets.length === 0 ? (
+                <div className="p-6 text-center text-trading-text-secondary">
+                  No forex pairs found matching your search.
+                </div>
               ) : (
-                forexAssets.map((forex) => (
+                filteredForexAssets.map((forex) => (
                   <Link 
                     to={`/market/forex/${forex.fromCurrency}${forex.toCurrency}`} 
                     key={`${forex.fromCurrency}${forex.toCurrency}`} 
