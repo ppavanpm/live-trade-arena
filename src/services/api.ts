@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -441,10 +442,10 @@ export const executeTrade = async (
     
     const total = quantity * price;
     
-    // Insert trade into database
+    // Insert trade into database - wrap the object in an array to match the expected type
     const { data: trade, error } = await supabase
       .from('trades')
-      .insert({
+      .insert([{
         user_id: user.id,
         symbol: assetSymbol,
         type: tradeType,
@@ -452,7 +453,7 @@ export const executeTrade = async (
         quantity: quantity.toString(), // Convert to string
         price: price.toString(), // Convert to string 
         total: total.toString() // Convert to string
-      })
+      }])
       .select()
       .single();
     
