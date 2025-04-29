@@ -211,7 +211,7 @@ const Market = () => {
   }
 
   return (
-    <div className="trading-app min-h-screen flex flex-col">
+    <div className="trading-app min-h-screen flex flex-col bg-[#121212]">
       <Navbar isLoggedIn={true} />
       
       <main className="flex-1 py-8 px-4 md:px-6">
@@ -219,7 +219,7 @@ const Market = () => {
           <Button 
             variant="ghost" 
             asChild
-            className="mb-4 text-trading-text-secondary hover:text-trading-text-primary"
+            className="mb-4 text-[#a0a0a0] hover:text-[#e0e0e0]"
           >
             <Link to="/markets">
               <ChevronLeft className="h-4 w-4 mr-1" /> Back to Markets
@@ -240,27 +240,27 @@ const Market = () => {
                 <img src={asset.image} alt={asset.name} className="h-12 w-12 rounded-full mr-3" />
               )}
               <div className="mr-6">
-                <h1 className="text-2xl font-bold text-trading-text-primary">
+                <h1 className="text-2xl font-bold text-[#e0e0e0]">
                   {asset?.name} ({asset?.symbol})
                 </h1>
-                <p className="text-trading-text-secondary">
+                <p className="text-[#a0a0a0]">
                   {type === 'crypto' ? 'Cryptocurrency' : type === 'stock' ? 'Stock' : 'Forex'}
                 </p>
               </div>
               
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div>
-                  <div className="text-xl font-bold text-trading-text-primary">
+                  <div className="text-xl font-bold text-[#e0e0e0]">
                     {formatCurrency(asset?.currentPrice || 0)}
                   </div>
                   <div>
                     {(asset?.priceChangePercentage24h || 0) >= 0 ? (
-                      <div className="flex items-center text-sm text-trading-accent-green">
+                      <div className="flex items-center text-sm text-[#22c55e]">
                         <ArrowUpRight className="h-3 w-3 mr-1" />
                         <span>{asset?.priceChangePercentage24h?.toFixed(2)}% (24h)</span>
                       </div>
                     ) : (
-                      <div className="flex items-center text-sm text-trading-accent-red">
+                      <div className="flex items-center text-sm text-[#ef4444]">
                         <ArrowDownRight className="h-3 w-3 mr-1" />
                         <span>{Math.abs(asset?.priceChangePercentage24h || 0).toFixed(2)}% (24h)</span>
                       </div>
@@ -270,28 +270,28 @@ const Market = () => {
                 
                 {asset?.marketCap && (
                   <div>
-                    <div className="text-sm text-trading-text-secondary">Market Cap</div>
+                    <div className="text-sm text-trading-text-secondary mb-1">Market Cap</div>
                     <div className="font-medium text-trading-text-primary">{formatCurrency(asset.marketCap)}</div>
                   </div>
                 )}
                 
                 {asset?.volume && (
                   <div>
-                    <div className="text-sm text-trading-text-secondary">24h Volume</div>
+                    <div className="text-sm text-trading-text-secondary mb-1">24h Volume</div>
                     <div className="font-medium text-trading-text-primary">{formatCurrency(asset.volume)}</div>
                   </div>
                 )}
                 
                 {asset?.high24h && (
                   <div>
-                    <div className="text-sm text-trading-text-secondary">24h High</div>
+                    <div className="text-sm text-trading-text-secondary mb-1">24h High</div>
                     <div className="font-medium text-trading-text-primary">{formatCurrency(asset.high24h)}</div>
                   </div>
                 )}
                 
                 {asset?.low24h && (
                   <div>
-                    <div className="text-sm text-trading-text-secondary">24h Low</div>
+                    <div className="text-sm text-trading-text-secondary mb-1">24h Low</div>
                     <div className="font-medium text-trading-text-primary">{formatCurrency(asset.low24h)}</div>
                   </div>
                 )}
@@ -311,23 +311,23 @@ const Market = () => {
               
               <div className="mt-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="bg-trading-bg-tertiary/30 rounded-none border-b border-trading-bg-tertiary/30">
+                  <TabsList className="bg-[#222222]/30 rounded-none border-b border-[#222222]/30">
                     <TabsTrigger 
                       value="chart" 
-                      className="rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                      className="rounded-none text-[#e0e0e0] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-[#3b82f6]"
                     >
                       Market Info
                     </TabsTrigger>
                     <TabsTrigger 
                       value="about" 
-                      className="rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                      className="rounded-none text-[#e0e0e0] data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-[#3b82f6]"
                     >
                       About
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="chart">
-                    <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary shadow-none rounded-t-none">
-                      <CardContent className="p-6 space-y-6">
+                    <Card className="border-[#222222]/30 bg-[#1a1f2c] shadow-none rounded-t-none">
+                      <CardContent className="p-6 space-y-6 text-[#e0e0e0]">
                         {isLoading ? (
                           Array(4).fill(0).map((_, i) => (
                             <div key={i} className="space-y-2">
@@ -383,8 +383,8 @@ const Market = () => {
                     </Card>
                   </TabsContent>
                   <TabsContent value="about">
-                    <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary shadow-none rounded-t-none">
-                      <CardContent className="p-6">
+                    <Card className="border-[#222222]/30 bg-[#1a1f2c] shadow-none rounded-t-none">
+                      <CardContent className="p-6 text-[#e0e0e0]">
                         {isLoading ? (
                           <div className="space-y-3">
                             <Skeleton className="h-5 w-full" />

@@ -91,26 +91,26 @@ const MarketOverview: React.FC = () => {
   const filteredForexAssets = filterAssets(forexAssets, searchTerm);
 
   return (
-    <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary">
+    <Card className="border-[#222222]/30 bg-[#1a1f2c]">
       <CardContent className="p-0">
-        <div className="p-6 border-b border-trading-bg-tertiary/30">
+        <div className="p-6 border-b border-[#222222]/30">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-medium text-trading-text-primary">Market Overview</h2>
+            <h2 className="text-xl font-medium text-[#e0e0e0]">Market Overview</h2>
             <Button variant="ghost" asChild>
-              <Link to="/markets" className="text-trading-accent-blue hover:text-trading-accent-blue/80 flex items-center gap-1">
+              <Link to="/markets" className="text-[#3b82f6] hover:text-[#3b82f6]/80 flex items-center gap-1">
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
-          <p className="text-sm text-trading-text-secondary mt-1">Real-time market data across assets</p>
+          <p className="text-sm text-[#a0a0a0] mt-1">Real-time market data across assets</p>
         </div>
         
-        <div className="p-4 border-b border-trading-bg-tertiary/30">
+        <div className="p-4 border-b border-[#222222]/30">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-trading-text-secondary h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#a0a0a0] h-4 w-4" />
             <Input 
               placeholder="Search assets..." 
-              className="pl-9 bg-trading-bg-tertiary/30 border-trading-bg-tertiary focus:border-trading-accent-blue"
+              className="pl-9 bg-[#222222]/30 border-[#222222] focus:border-[#3b82f6] text-[#e0e0e0]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -118,13 +118,13 @@ const MarketOverview: React.FC = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 bg-trading-bg-tertiary/30 rounded-none border-b border-trading-bg-tertiary/30">
+          <TabsList className="grid grid-cols-3 bg-[#222222]/30 rounded-none border-b border-[#222222]/30">
             <TabsTrigger 
               value="crypto" 
               className={cn(
-                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:text-[#3b82f6] data-[state=active]:shadow-none text-[#e0e0e0]",
                 "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
-                "data-[state=active]:border-trading-accent-blue rounded-none"
+                "data-[state=active]:border-[#3b82f6] rounded-none"
               )}
             >
               Crypto
@@ -132,9 +132,9 @@ const MarketOverview: React.FC = () => {
             <TabsTrigger 
               value="stocks" 
               className={cn(
-                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:text-[#3b82f6] data-[state=active]:shadow-none text-[#e0e0e0]",
                 "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
-                "data-[state=active]:border-trading-accent-blue rounded-none"
+                "data-[state=active]:border-[#3b82f6] rounded-none"
               )}
             >
               Stocks
@@ -142,9 +142,9 @@ const MarketOverview: React.FC = () => {
             <TabsTrigger 
               value="forex" 
               className={cn(
-                "data-[state=active]:text-trading-accent-blue data-[state=active]:shadow-none",
+                "data-[state=active]:text-[#3b82f6] data-[state=active]:shadow-none text-[#e0e0e0]",
                 "data-[state=active]:bg-transparent data-[state=active]:border-b-2",
-                "data-[state=active]:border-trading-accent-blue rounded-none"
+                "data-[state=active]:border-[#3b82f6] rounded-none"
               )}
             >
               Forex

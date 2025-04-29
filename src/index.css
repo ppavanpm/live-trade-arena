@@ -110,19 +110,19 @@
 
 /* Trading platform specific styles */
 .trading-app {
-  @apply bg-trading-bg-primary text-trading-text-primary min-h-screen;
+  @apply bg-[#121212] text-[#e0e0e0] min-h-screen;
 }
 
 .price-up {
-  @apply text-trading-accent-green;
+  @apply text-[#22c55e];
 }
 
 .price-down {
-  @apply text-trading-accent-red;
+  @apply text-[#ef4444];
 }
 
 .chart-container {
-  @apply w-full h-full bg-trading-chart-bg rounded-lg overflow-hidden;
+  @apply w-full h-full bg-[#1a1f2c] rounded-lg overflow-hidden;
 }
 
 .card-gradient {
@@ -136,4 +136,66 @@
 
 .price-pulse-down {
   @apply animate-price-pulse-negative;
+}
+
+/* Custom background and text colors for the trading platform */
+:root {
+  --trading-bg-primary: #121212;
+  --trading-bg-secondary: #1a1f2c;
+  --trading-bg-tertiary: #222222;
+  --trading-chart-bg: #1a1f2c;
+  --trading-text-primary: #e0e0e0;
+  --trading-text-secondary: #a0a0a0;
+  --trading-accent-blue: #3b82f6;
+  --trading-accent-green: #22c55e;
+  --trading-accent-red: #ef4444;
+}
+
+/* Apply trading colors with !important to ensure they override other styles */
+.bg-trading-bg-primary {
+  background-color: var(--trading-bg-primary) !important;
+}
+
+.bg-trading-bg-secondary {
+  background-color: var(--trading-bg-secondary) !important;
+}
+
+.bg-trading-bg-tertiary {
+  background-color: var(--trading-bg-tertiary) !important;
+}
+
+.bg-trading-chart-bg {
+  background-color: var(--trading-chart-bg) !important;
+}
+
+.text-trading-text-primary {
+  color: var(--trading-text-primary) !important;
+}
+
+.text-trading-text-secondary {
+  color: var(--trading-text-secondary) !important;
+}
+
+.text-trading-accent-blue {
+  color: var(--trading-accent-blue) !important;
+}
+
+.text-trading-accent-green {
+  color: var(--trading-accent-green) !important;
+}
+
+.text-trading-accent-red {
+  color: var(--trading-accent-red) !important;
+}
+
+.bg-trading-accent-blue {
+  background-color: var(--trading-accent-blue) !important;
+}
+
+.bg-trading-accent-green {
+  background-color: var(--trading-accent-green) !important;
+}
+
+.bg-trading-accent-red {
+  background-color: var(--trading-accent-red) !important;
 }

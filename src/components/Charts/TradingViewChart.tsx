@@ -74,7 +74,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     const chartOptions = {
       layout: {
         background: { color: '#0F172A' },
-        textColor: '#94A3B8',
+        textColor: '#e0e0e0',
       },
       grid: {
         vertLines: { color: '#1E293B' },
@@ -153,14 +153,14 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   };
 
   return (
-    <Card className="border-trading-bg-tertiary/30 bg-trading-bg-secondary">
+    <Card className="border-trading-bg-tertiary/30 bg-[#1a1f2c]">
       <div className="p-4 border-b border-trading-bg-tertiary/30">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-medium text-trading-text-primary">
+            <h2 className="text-lg font-medium text-[#e0e0e0]">
               {name} ({symbol})
             </h2>
-            <p className="text-sm text-trading-text-secondary">
+            <p className="text-sm text-[#a0a0a0]">
               {type === 'crypto' ? 'Cryptocurrency' : type === 'stock' ? 'Stock' : 'Forex'}
             </p>
           </div>
@@ -173,8 +173,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
                 onClick={() => handleTimeframeChange(timeframe)}
                 className={
                   selectedTimeframe === timeframe 
-                    ? "bg-trading-accent-blue hover:bg-trading-accent-blue/90" 
-                    : "border-trading-bg-tertiary text-trading-text-secondary"
+                    ? "bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white" 
+                    : "border-[#222222] text-[#a0a0a0] hover:text-[#e0e0e0]"
                 }
               >
                 {timeframe}
